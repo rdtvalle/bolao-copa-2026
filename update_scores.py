@@ -95,22 +95,24 @@ NOMES_EN_PARA_PT = {v: k for k, v in NOMES_PT_PARA_EN.items()}
 #   BUSCAR PARTIDAS NA API
 # ============================================================
 def buscar_partidas():
-    url = "https://api.football-data.org/v4/competitions/WC2026/matches"
-    cabecalhos = {"X-Auth-Token": API_KEY}
+    url = "https://worldcupapi.com/api/fixtures"
+    params = {"key": API_KEY}
 
     try:
-        print("[INFO] Buscando partidas na API football-data.org...")
-        resposta = requests.get(url, headers=cabecalhos, timeout=15)
+        print("[INFO] Buscando partidas na worldcupapi.com...")
+        resposta = requests.get(url, params=params, timeout=15)
 
         if resposta.status_code == 200:
             dados = resposta.json()
-            partidas = dados.get("matches", [])
+            partidas = dados.get("data", dados) if isinstance(dados, dict) else dados
+            if not isinstance(partidas, list):
+                partidas = []
             print("[OK] " + str(len(partidas)) + " partidas encontradas.")
             return partidas
 
-        elif resposta.status_code == 403:
-            print("[ERRO] 403: API Key invalida ou sem permissao.")
-            print("       Verifique a variavel API_KEY no inicio do script.")
+        elif resposta.status_code == 401:
+            print("[ERRO] 401: API Key invalida.")
+            print("       Cadastre-se em https://worldcupapi.com e atualize o Secret FOOTBALL_API_KEY.")
             return []
 
         elif resposta.status_code == 429:
@@ -123,12 +125,11 @@ def buscar_partidas():
             return []
 
     except requests.exceptions.ConnectionError:
-        print("[ERRO] Sem conexao com a internet. Verifique sua rede.")
+        print("[ERRO] Sem conexao com a internet.")
         return []
     except requests.exceptions.Timeout:
-        print("[ERRO] Timeout: A API demorou demais para responder.")
+        print("[ERRO] Timeout.")
         return []
-
 
 # ============================================================
 #   CONECTAR AO GOOGLE SHEETS
